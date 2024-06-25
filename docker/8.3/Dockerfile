@@ -44,6 +44,7 @@ RUN apt-get update \
     && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/keyrings/pgdg.gpg >/dev/null \
     && echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt jammy-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
+    && apt-get install -y libnss3-dev \
     && apt-get install -y yarn \
     && apt-get install -y $MYSQL_CLIENT \
     && apt-get install -y postgresql-client-$POSTGRES_VERSION \
