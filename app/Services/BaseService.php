@@ -15,11 +15,6 @@ abstract class BaseService
 
     protected bool $withTrashed = false;
 
-    public static function instance(): static
-    {
-        return app(static::class);
-    }
-
     public function __construct()
     {
         $this->model = app($this->model());
@@ -27,20 +22,14 @@ abstract class BaseService
 
     abstract protected function model(): string;
 
+    public static function instance(): static
+    {
+        return app(static::class);
+    }
+
     public function getMorphClass(): string
     {
         return $this->model->getMorphClass();
-    }
-
-    public function query(): Builder
-    {
-        return $this->model->query();
-    }
-
-    public function withTrashed()
-    {
-        $this->withTrashed = true;
-        return $this;
     }
 
     public function withoutTrashed()
@@ -61,6 +50,17 @@ abstract class BaseService
         return $q->where($this->model->getKeyName(), $id)->firstOrFail($columns);
     }
 
+    public function query(): Builder
+    {
+        return $this->model->query();
+    }
+
+    public function withTrashed()
+    {
+        $this->withTrashed = true;
+        return $this;
+    }
+
     public function find($id, $columns = ['*'])
     {
         return $this->model->find($id, $columns);
@@ -78,19 +78,20 @@ abstract class BaseService
         return $this->model->all();
     }
 
-    public function save(Model $model, $options = []): bool
+    public function firstWhere(array $filters)
     {
-        return $model->save($options);
+        return $this->model->where($filters)->first();
     }
 
-
-    public function create($data)
+    public function where(array $filters): Builder
     {
-        $class = $this->model();
-        $model = new $class();
-        $model->fill($data);
-        $model->save();
-        return $model;
+        return $this->model->where($filters);
+    }
+
+    public function allWhere(array $filters)
+    {
+        return $this->model->where($filters)->get();
+
     }
 
     public function make($data)
@@ -100,15 +101,6 @@ abstract class BaseService
         $model->fill($data);
         return $model;
     }
-
-    public function update(Model $model, $data, &$changes = null): Model
-    {
-        $model->fill($data);
-        $changes = $model->getChanges();
-        $model->save();
-        return $model;
-    }
-
 
     public function delete(Model $model): Model
     {
@@ -121,11 +113,37 @@ abstract class BaseService
         return $model->forceDelete();
     }
 
-    public function updateOrCreate($unique, $data)
+    public function updateOrCreate($unique, $data): Model
+    {
+        $first = $this->firstWhere($unique);
+        if ($first) {
+            return $this->update($first, $data);
+        } else {
+            return $this->create(array_merge($unique, $data));
+        }
+    }
+
+
+    public function update(Model $model, $data, &$changes = null): Model
+    {
+        $model->fill($data);
+        $changes = $model->getChanges();
+        $model->save();
+        return $model;
+    }
+
+    public function save(Model $model, $options = []): bool
+    {
+        return $model->save($options);
+    }
+
+    public function create($data)
     {
         $class = $this->model();
         $model = new $class();
-        return $model->updateOrCreate($unique, $data);
+        $model->fill($data);
+        $model->save();
+        return $model;
     }
 
 }

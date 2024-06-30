@@ -2,68 +2,55 @@
 
 namespace App\Models;
 
+use App\Casts\ContentCast;
+use App\Utils\UrlHelper;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 /**
  * @class Site
- * @property string url
- * @property string content
- * @property array  headers
+ * @property string      url_hash
+ * @property string      url
+ * @property SiteContent content
+ * @property SiteStatus  status
+ * @property SiteStage   stage
+ * @property int         http_code
  *
  */
 class Site extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['url', 'content', 'headers'];
-    protected $casts    = [
-        'headers' => 'array',
+    protected $fillable = [
+        'url_hash',
+        'url',
+        'content',
+        'status',
+        'stage',
+        'http_code'
     ];
 
-    protected function content(): Attribute
+    protected $casts = [
+        'content' => ContentCast::class,
+        'status'  => SiteStatus::class,
+        'stage'   => SiteStage::class,
+    ];
+
+    public function toSearchableArray()
     {
-        return Attribute::make(
-            get: fn(mixed $value, array $attributes) => $value,
-            set: fn(string $value) => $this->parseTags($value),
-        );
+        return [
+            'url'     => $this->url,
+            'content' => $this->content->toArray(),
+        ];
     }
+
 
     protected function url(): Attribute
     {
         return Attribute::make(
             get: fn(mixed $value, array $attributes) => $value,
-            set: fn(string $value) => $this->formatUrl($value),
+            set: fn(string $value) => UrlHelper::formatUrl($value),
         );
-    }
-
-    public function toSearchableArray()
-    {
-        return [
-            'url'      => $this->url,
-            'content'  => $this->content,
-            'metadata' => $this->metadata,
-        ];
-    }
-
-
-    public function parseTags($value): false|string
-    {
-        if (empty($value)) return false;
-
-        $html = new \Html2Text\Html2Text($value);
-
-        return $html->getText();
-    }
-
-    private function formatUrl(string $value)
-    {
-        if (!Str::startsWith($value, ['http://', 'https://'])) {
-            $value = 'https://' . $value;
-        }
-
-        return trim($value);
     }
 }

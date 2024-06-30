@@ -1,11 +1,12 @@
 <?php
 
+use App\Models\SiteStage;
+use App\Models\SiteStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,9 +14,12 @@ return new class extends Migration
     {
         Schema::create('sites', function (Blueprint $table) {
             $table->id();
-            $table->string('url')->unique();
-            $table->text('content')->nullable();
-            $table->json('headers')->nullable();
+            $table->string('url_hash', 64)->unique();
+            $table->string('url', 2048);
+            $table->json('content')->nullable();
+            $table->unsignedTinyInteger('stage')->default(SiteStage::PENDING);
+            $table->unsignedTinyInteger('status')->default(SiteStatus::UNKNOWN);
+            $table->unsignedSmallInteger('http_code')->nullable();
             $table->timestamps();
         });
     }
