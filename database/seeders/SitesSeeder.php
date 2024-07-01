@@ -12,6 +12,6 @@ class SitesSeeder extends Seeder
      */
     public function run(): void
     {
-        SiteService::instance()->create(['url' => 'matteocosi.com']);
+        SiteService::instance()->updateOrCreate(['url' => 'matteocosi.com']);
     }
 }

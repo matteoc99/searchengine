@@ -3,17 +3,17 @@
 namespace App\Utils;
 
 use App\Models\Site;
-use App\Models\SiteContent;
+use App\Models\SiteContentContent;
 use DOMDocument;
 
 class HtmlHelper
 {
 
 
-    public static function parseTags(Site $site, string $html): SiteContent|null
+    public static function parseTags(array|string $html, ?Site $site = null): array|null
     {
-        if (empty($html)) {
-            return null;
+        if (empty($html) || is_array($html)) {
+            return $html;
         }
 
         $doc = new DOMDocument();
@@ -69,7 +69,7 @@ class HtmlHelper
         $anchorTags    = $doc->getElementsByTagName('a');
         foreach ($anchorTags as $tag) {
             $href = $tag->getAttribute('href');
-            if (!$site->url || self::isCrossSiteLink($site->url, $href)) {
+            if (!$site?->url || self::isCrossSiteLink($site?->url, $href)) {
                 $parsedUrl = parse_url($href);
                 if (isset($parsedUrl['host'])) {
                     $domain          = $parsedUrl['host'];
@@ -113,8 +113,14 @@ class HtmlHelper
                 $data['lists'][$listTag][] = $listData;
             }
         }
+        return $data;
+    }
 
-        return SiteContent::fromArray($data);
+    public static function parseContent(array|string $html, ?Site $site = null): SiteContentContent|null
+    {
+
+
+        return SiteContentContent::fromArray(is_array($html) ? $html : self::parseTags($html, $site));
     }
 
     private static function isCrossSiteLink(string $url, string $href): bool

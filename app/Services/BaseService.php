@@ -113,7 +113,7 @@ abstract class BaseService
         return $model->forceDelete();
     }
 
-    public function updateOrCreate($unique, $data): Model
+    public function updateOrCreate(array $unique, array $data=[]): Model
     {
         $first = $this->firstWhere($unique);
         if ($first) {

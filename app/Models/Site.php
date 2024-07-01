@@ -2,21 +2,25 @@
 
 namespace App\Models;
 
-use App\Casts\ContentCast;
-use App\Utils\UrlHelper;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 /**
  * @class Site
+ * @property int         id
  * @property string      url_hash
  * @property string      url
- * @property SiteContent content
+ * @property string      description
+ * @property string      author
+ * @property string      title
+ * @property string      keywords
+ * @property string      canonical
  * @property SiteStatus  status
  * @property SiteStage   stage
  * @property int         http_code
  *
+ * @property SiteContent $content
  */
 class Site extends Model
 {
@@ -25,32 +29,33 @@ class Site extends Model
     protected $fillable = [
         'url_hash',
         'url',
-        'content',
+        'description',
+        'author',
+        'title',
+        'keywords',
+        'canonical',
         'status',
         'stage',
-        'http_code'
+        'http_code',
     ];
 
     protected $casts = [
-        'content' => ContentCast::class,
-        'status'  => SiteStatus::class,
-        'stage'   => SiteStage::class,
+        'status' => SiteStatus::class,
+        'stage'  => SiteStage::class,
     ];
 
     public function toSearchableArray()
     {
-        return [
-            'url'     => $this->url,
-            'content' => $this->content->toArray(),
-        ];
+        return Arr::only($this->attributesToArray(), [
+            "url",
+            "description",
+            "author",
+            "title",
+        ]);
     }
 
-
-    protected function url(): Attribute
+    public function content()
     {
-        return Attribute::make(
-            get: fn(mixed $value, array $attributes) => $value,
-            set: fn(string $value) => UrlHelper::formatUrl($value),
-        );
+        return $this->hasOne(SiteContent::class);
     }
 }
